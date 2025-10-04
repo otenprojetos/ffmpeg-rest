@@ -77,10 +77,12 @@ export async function processVideoExtractAudio(job: Job<VideoExtractAudioJobData
       '-acodec',
       'pcm_s16le',
       '-ar',
-      '44100',
-      '-ac',
-      mono ? '1' : '2'
+      '44100'
     ];
+
+    if (mono) {
+      args.push('-ac', '1');
+    }
 
     args.push('-y', outputPath);
 

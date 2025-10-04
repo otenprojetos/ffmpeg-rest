@@ -89,7 +89,7 @@ describe('processVideoToMp4', () => {
 
 function createTestAviFile(outputPath: string): void {
   execSync(
-    `ffmpeg -f lavfi -i testsrc=duration=2:size=320x240:rate=30 -f lavfi -i sine=frequency=1000:duration=2 -pix_fmt yuv420p -y "${outputPath}"`,
+    `ffmpeg -f lavfi -i testsrc=duration=2:size=320x240:rate=30 -f lavfi -i sine=frequency=1000:duration=2:sample_rate=44100 -ac 2 -pix_fmt yuv420p -y "${outputPath}"`,
     { stdio: 'pipe' }
   );
 }
@@ -264,7 +264,7 @@ describe('processVideoExtractAudio', () => {
     expect(metadata.streams[0].codec_name).toBe('pcm_s16le');
   });
 
-  it('should extract audio as stereo when mono is false', async () => {
+  it('should preserve original channels when mono is false', async () => {
     const inputPath = path.join(FIXTURES_DIR, 'test-video-stereo.avi');
     const outputPath = path.join(TEST_DIR, 'audio-stereo.wav');
 
