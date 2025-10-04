@@ -9,6 +9,9 @@
     "build:worker": "esbuild src/worker.ts --bundle --sourcemap --platform=node --loader:.node=file --outfile=dist/worker.js",
     "start": "node ./dist/server.js",
     "start:worker": "node ./dist/worker.js",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write ."
   },
@@ -28,6 +31,7 @@
     "esbuild": "0.25.10",
     "prettier": "3.6.2",
     "tsx": "^4.7.1",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
   }
 }

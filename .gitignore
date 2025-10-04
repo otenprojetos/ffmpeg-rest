@@ -26,5 +26,9 @@ lerna-debug.log*
 
 # misc
 .DS_Store
-CLAUDE.local.md
-BULLMQ.md
+.claude/
+CLAUDE.md
+
+# test
+test-outputs/
+test-fixtures/
