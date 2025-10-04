@@ -1,7 +1,44 @@
 import type { Job } from 'bullmq';
 import type { JobResult } from '..';
 import type { MediaProbeJobData } from './schemas';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
+import { existsSync } from 'fs';
 
-export async function processMediaProbe(_job: Job<MediaProbeJobData>): Promise<JobResult> {
-  throw new Error('Not implemented yet');
+const execFileAsync = promisify(execFile);
+
+export async function processMediaProbe(job: Job<MediaProbeJobData>): Promise<JobResult> {
+  const { inputPath } = job.data;
+
+  if (!existsSync(inputPath)) {
+    return {
+      success: false,
+      error: `Input file does not exist: ${inputPath}`
+    };
+  }
+
+  try {
+    const { stdout } = await execFileAsync('ffprobe', [
+      '-v',
+      'error',
+      '-print_format',
+      'json',
+      '-show_format',
+      '-show_streams',
+      inputPath
+    ]);
+
+    const metadata = JSON.parse(stdout);
+
+    return {
+      success: true,
+      metadata
+    };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return {
+      success: false,
+      error: `Failed to probe media file: ${errorMessage}`
+    };
+  }
 }
