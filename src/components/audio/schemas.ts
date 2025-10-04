@@ -1,0 +1,108 @@
+import { createRoute } from '@hono/zod-openapi';
+import { FileSchema, ErrorSchema } from '~/utils/schemas';
+
+/**
+ * POST /audio/mp3 - Convert any audio format to MP3
+ */
+export const audioToMp3Route = createRoute({
+  method: 'post',
+  path: '/audio/mp3',
+  tags: ['Audio'],
+  request: {
+    body: {
+      content: {
+        'multipart/form-data': {
+          schema: FileSchema
+        }
+      },
+      required: true
+    }
+  },
+  responses: {
+    200: {
+      content: {
+        'audio/mpeg': {
+          schema: FileSchema
+        }
+      },
+      description: 'Audio converted to MP3 format'
+    },
+    400: {
+      content: {
+        'application/json': {
+          schema: ErrorSchema
+        }
+      },
+      description: 'Invalid audio file or unsupported format'
+    },
+    500: {
+      content: {
+        'application/json': {
+          schema: ErrorSchema
+        }
+      },
+      description: 'Conversion failed'
+    },
+    501: {
+      content: {
+        'application/json': {
+          schema: ErrorSchema
+        }
+      },
+      description: 'Not implemented'
+    }
+  }
+});
+
+/**
+ * POST /audio/wav - Convert any audio format to WAV
+ */
+export const audioToWavRoute = createRoute({
+  method: 'post',
+  path: '/audio/wav',
+  tags: ['Audio'],
+  request: {
+    body: {
+      content: {
+        'multipart/form-data': {
+          schema: FileSchema
+        }
+      },
+      required: true
+    }
+  },
+  responses: {
+    200: {
+      content: {
+        'audio/wav': {
+          schema: FileSchema
+        }
+      },
+      description: 'Audio converted to WAV format'
+    },
+    400: {
+      content: {
+        'application/json': {
+          schema: ErrorSchema
+        }
+      },
+      description: 'Invalid audio file or unsupported format'
+    },
+    500: {
+      content: {
+        'application/json': {
+          schema: ErrorSchema
+        }
+      },
+      description: 'Conversion failed'
+    },
+    501: {
+      content: {
+        'application/json': {
+          schema: ErrorSchema
+        }
+      },
+      description: 'Not implemented'
+    }
+  }
+});
