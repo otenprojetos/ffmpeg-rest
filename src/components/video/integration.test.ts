@@ -120,12 +120,12 @@ describe('Video Processing Integration - S3 Mode', () => {
 
   it('should convert video to MP4 and upload to S3', async () => {
     const apiUrl = getApiUrl();
-    const testVideoPath = path.join(__dirname, '../../../test-video.avi');
+    const testVideoPath = path.join(__dirname, '../../../test-video.mp4');
     const videoBuffer = await readFile(testVideoPath);
 
     const formData = new FormData();
-    const blob = new Blob([new Uint8Array(videoBuffer)], { type: 'video/x-msvideo' });
-    formData.append('file', blob, 'test-video.avi');
+    const blob = new Blob([new Uint8Array(videoBuffer)], { type: 'video/mp4' });
+    formData.append('file', blob, 'test-video.mp4');
 
     const response = await fetch(`${apiUrl}/video/mp4/url`, {
       method: 'POST',
@@ -148,12 +148,12 @@ describe('Video Processing Integration - S3 Mode', () => {
 
   it('should extract audio to WAV and upload to S3', async () => {
     const apiUrl = getApiUrl();
-    const testVideoPath = path.join(__dirname, '../../../test-video.avi');
+    const testVideoPath = path.join(__dirname, '../../../test-video.mp4');
     const videoBuffer = await readFile(testVideoPath);
 
     const formData = new FormData();
-    const blob = new Blob([new Uint8Array(videoBuffer)], { type: 'video/x-msvideo' });
-    formData.append('file', blob, 'test-video.avi');
+    const blob = new Blob([new Uint8Array(videoBuffer)], { type: 'video/mp4' });
+    formData.append('file', blob, 'test-video.mp4');
 
     const response = await fetch(`${apiUrl}/video/audio/url`, {
       method: 'POST',
@@ -176,12 +176,12 @@ describe('Video Processing Integration - S3 Mode', () => {
 
   it('should extract frames and upload archive to S3', async () => {
     const apiUrl = getApiUrl();
-    const testVideoPath = path.join(__dirname, '../../../test-video.avi');
+    const testVideoPath = path.join(__dirname, '../../../test-video.mp4');
     const videoBuffer = await readFile(testVideoPath);
 
     const formData = new FormData();
-    const blob = new Blob([new Uint8Array(videoBuffer)], { type: 'video/x-msvideo' });
-    formData.append('file', blob, 'test-video.avi');
+    const blob = new Blob([new Uint8Array(videoBuffer)], { type: 'video/mp4' });
+    formData.append('file', blob, 'test-video.mp4');
 
     const response = await fetch(`${apiUrl}/video/frames/url?fps=1&compress=zip`, {
       method: 'POST',
