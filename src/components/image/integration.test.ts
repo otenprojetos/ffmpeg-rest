@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { setupIntegrationTests, teardownIntegrationTests, getApiUrl, getLocalStackContainer } from '~/test-utils/integration-setup';
+import { describe, it, expect, beforeAll } from 'vitest';
+import { setupIntegrationTests, getApiUrl, getLocalStackEndpoint } from '~/test-utils/integration-setup';
 import { ensureBucketExists } from '~/test-utils/s3';
 import { readFile } from 'fs/promises';
 import path from 'path';
@@ -9,10 +9,6 @@ describe('Image Conversion Integration', () => {
   beforeAll(async () => {
     await setupIntegrationTests();
   }, 120000);
-
-  afterAll(async () => {
-    await teardownIntegrationTests();
-  });
 
   it('should convert PNG to JPG', async () => {
     const apiUrl = getApiUrl();
@@ -57,8 +53,7 @@ describe('Image Conversion Integration - S3 Mode', () => {
   beforeAll(async () => {
     await setupIntegrationTests({ s3Mode: true });
 
-    const container = getLocalStackContainer();
-    const endpoint = container.getConnectionUri();
+    const endpoint = getLocalStackEndpoint('s3');
 
     s3Client = new S3Client({
       endpoint,
@@ -73,12 +68,8 @@ describe('Image Conversion Integration - S3 Mode', () => {
     await ensureBucketExists(s3Client, TEST_BUCKET);
   }, 180000);
 
-  afterAll(async () => {
-    await teardownIntegrationTests();
-  });
-
   it('should convert PNG to JPG and upload to S3', async () => {
-    const apiUrl = getApiUrl();
+    const apiUrl = getApiUrl('s3');
     const testImagePath = path.join(__dirname, '../../../test-image.png');
     const imageBuffer = await readFile(testImagePath);
 
@@ -106,7 +97,7 @@ describe('Image Conversion Integration - S3 Mode', () => {
   }, 60000);
 
   it('should reject invalid file', async () => {
-    const apiUrl = getApiUrl();
+    const apiUrl = getApiUrl('s3');
     const formData = new FormData();
     const blob = new Blob(['not an image file'], { type: 'text/plain' });
     formData.append('file', blob, 'test.txt');

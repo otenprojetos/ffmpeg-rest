@@ -1,4 +1,4 @@
-import { GenericContainer, Wait, type StartedTestContainer, Network, type StartedNetwork } from 'testcontainers';
+import { GenericContainer, Wait, type StartedNetwork, type StartedTestContainer, Network } from 'testcontainers';
 import { RedisContainer, type StartedRedisContainer } from '@testcontainers/redis';
 import { LocalstackContainer, type StartedLocalStackContainer } from '@testcontainers/localstack';
 import { S3Client, CreateBucketCommand } from '@aws-sdk/client-s3';
@@ -8,169 +8,240 @@ const IMAGE_NAME = 'ffmpeg-rest-test';
 const REDIS_ALIAS = 'redis';
 const LOCALSTACK_ALIAS = 'localstack';
 
-interface IntegrationSetupResult {
+export type IntegrationMode = 'stateless' | 's3';
+
+export interface IntegrationSetupResult {
+  mode: IntegrationMode;
   apiUrl: string;
-  appContainer: StartedTestContainer;
-  redisContainer: StartedRedisContainer;
-  localstackContainer?: StartedLocalStackContainer;
+  localstackEndpoint?: string;
 }
 
-let redisContainer: StartedRedisContainer | null = null;
-let localstackContainer: StartedLocalStackContainer | null = null;
-let appContainer: StartedTestContainer | null = null;
-let network: StartedNetwork | null = null;
-let apiUrl: string | null = null;
-let currentMode: 'stateless' | 's3' | null = null;
-let setupInFlight: Promise<void> | null = null;
-let s3BucketInitialized = false;
+interface EnvironmentState {
+  readonly mode: IntegrationMode;
+  readonly requiresS3: boolean;
+  redisContainer: StartedRedisContainer | null;
+  localstackContainer: StartedLocalStackContainer | null;
+  appContainer: StartedTestContainer | null;
+  network: StartedNetwork | null;
+  apiUrl: string | null;
+  setupInFlight: Promise<IntegrationSetupResult> | null;
+  s3BucketInitialized: boolean;
+  localstackEndpoint: string | null;
+}
+
+const environmentStates: Record<IntegrationMode, EnvironmentState> = {
+  stateless: {
+    mode: 'stateless',
+    requiresS3: false,
+    redisContainer: null,
+    localstackContainer: null,
+    appContainer: null,
+    network: null,
+    apiUrl: null,
+    setupInFlight: null,
+    s3BucketInitialized: false,
+    localstackEndpoint: null
+  },
+  s3: {
+    mode: 's3',
+    requiresS3: true,
+    redisContainer: null,
+    localstackContainer: null,
+    appContainer: null,
+    network: null,
+    apiUrl: null,
+    setupInFlight: null,
+    s3BucketInitialized: false,
+    localstackEndpoint: null
+  }
+};
+
 let imageBuildPromise: Promise<void> | null = null;
 let imageBuilt = false;
 
 export async function setupIntegrationTests(options?: { s3Mode?: boolean }): Promise<IntegrationSetupResult> {
-  const requestedMode = options?.s3Mode ? 's3' : 'stateless';
+  const mode: IntegrationMode = options?.s3Mode ? 's3' : 'stateless';
+  const state = environmentStates[mode];
 
-  if (setupInFlight) {
-    await setupInFlight;
-    if (appContainer && currentMode === requestedMode) {
-      return buildResult();
+  if (!state.apiUrl) {
+    populateStateFromEnv(state);
+    if (state.apiUrl) {
+      return buildResult(state);
     }
   }
 
-  if (appContainer && currentMode === requestedMode) {
-    return buildResult();
+  if (state.apiUrl && (!state.requiresS3 || state.localstackEndpoint)) {
+    return buildResult(state);
   }
 
-  if (appContainer && currentMode !== requestedMode) {
-    await teardownIntegrationTests();
+  if (state.setupInFlight) {
+    return state.setupInFlight;
   }
 
-  currentMode = requestedMode;
+  state.setupInFlight = performSetup(state)
+    .catch((error) => {
+      state.apiUrl = null;
+      state.appContainer = null;
+      state.redisContainer = null;
+      state.localstackContainer = null;
+      state.network = null;
+      throw error;
+    })
+    .finally(() => {
+      state.setupInFlight = null;
+    });
+
+  return state.setupInFlight;
+}
+
+export async function teardownIntegrationTests(options?: { s3Mode?: boolean }) {
+  const mode: IntegrationMode = options?.s3Mode ? 's3' : 'stateless';
+  await teardownMode(environmentStates[mode]);
+}
+
+export async function teardownAllIntegrationTests() {
+  for (const mode of Object.keys(environmentStates) as IntegrationMode[]) {
+    await teardownMode(environmentStates[mode]);
+  }
+}
+
+export function getApiUrl(mode: IntegrationMode = 'stateless'): string {
+  const state = environmentStates[mode];
+  if (!state.apiUrl) {
+    populateStateFromEnv(state);
+  }
+  if (!state.apiUrl) {
+    throw new Error(`Integration tests for mode "${mode}" not set up. Call setupIntegrationTests() first.`);
+  }
+  return state.apiUrl;
+}
+
+export function getLocalStackEndpoint(mode: IntegrationMode = 's3'): string {
+  if (mode !== 's3') {
+    throw new Error('LocalStack container only available in S3 mode.');
+  }
+
+  const state = environmentStates[mode];
+
+  if (!state.localstackEndpoint) {
+    populateStateFromEnv(state);
+  }
+
+  if (!state.localstackEndpoint) {
+    throw new Error('LocalStack endpoint not available. Call setupIntegrationTests({ s3Mode: true }) first.');
+  }
+
+  return state.localstackEndpoint;
+}
+
+async function performSetup(state: EnvironmentState): Promise<IntegrationSetupResult> {
+  const { requiresS3 } = state;
+
+  console.log(`[${state.mode}] Creating network...`);
+  state.network = await new Network().start();
+
+  console.log(`[${state.mode}] Starting Redis container...`);
+  state.redisContainer = await new RedisContainer('redis:7.4-alpine')
+    .withNetwork(state.network)
+    .withNetworkAliases(REDIS_ALIAS)
+    .start();
 
   const environment: Record<string, string> = {
+    NODE_ENV: 'test',
     REDIS_URL: `redis://${REDIS_ALIAS}:6379`,
-    STORAGE_MODE: 'stateless',
-    NODE_ENV: 'test'
+    STORAGE_MODE: 'stateless'
   };
 
-  const performSetup = async () => {
-    console.log('Creating network...');
-    network = await new Network().start();
+  let localstackHostEndpoint: string | undefined;
 
-    console.log('Starting Redis container...');
-    redisContainer = await new RedisContainer('redis:7.4-alpine')
-      .withNetwork(network)
-      .withNetworkAliases(REDIS_ALIAS)
+  if (requiresS3) {
+    console.log(`[${state.mode}] Starting LocalStack container...`);
+    state.localstackContainer = await new LocalstackContainer('localstack/localstack:latest')
+      .withNetwork(state.network)
+      .withNetworkAliases(LOCALSTACK_ALIAS)
       .start();
 
-    if (options?.s3Mode) {
-      console.log('Starting LocalStack container...');
-      localstackContainer = await new LocalstackContainer('localstack/localstack:latest')
-        .withNetwork(network)
-        .withNetworkAliases(LOCALSTACK_ALIAS)
-        .start();
+    localstackHostEndpoint = state.localstackContainer.getConnectionUri();
+    const localstackInternalEndpoint = `http://${LOCALSTACK_ALIAS}:4566`;
 
-      const localstackHostEndpoint = localstackContainer.getConnectionUri();
-      const localstackInternalEndpoint = `http://${LOCALSTACK_ALIAS}:4566`;
+    environment['STORAGE_MODE'] = 's3';
+    environment['S3_ENDPOINT'] = localstackInternalEndpoint;
+    environment['S3_REGION'] = 'us-east-1';
+    environment['S3_BUCKET'] = 'test-ffmpeg-bucket';
+    environment['S3_ACCESS_KEY_ID'] = 'test';
+    environment['S3_SECRET_ACCESS_KEY'] = 'test';
+    environment['S3_PATH_PREFIX'] = 'test-media';
 
-      environment['STORAGE_MODE'] = 's3';
-      environment['S3_ENDPOINT'] = localstackInternalEndpoint;
-      environment['S3_REGION'] = 'us-east-1';
-      environment['S3_BUCKET'] = 'test-ffmpeg-bucket';
-      environment['S3_ACCESS_KEY_ID'] = 'test';
-      environment['S3_SECRET_ACCESS_KEY'] = 'test';
-      environment['S3_PATH_PREFIX'] = 'test-media';
-
-      if (!s3BucketInitialized) {
-        console.log('Ensuring S3 bucket exists...');
-        const s3Client = new S3Client({
-          endpoint: localstackHostEndpoint,
-          forcePathStyle: true,
-          region: environment['S3_REGION'],
-          credentials: {
-            accessKeyId: environment['S3_ACCESS_KEY_ID'],
-            secretAccessKey: environment['S3_SECRET_ACCESS_KEY']
-          }
-        });
-
-        try {
-          await s3Client.send(new CreateBucketCommand({ Bucket: environment['S3_BUCKET'] }));
-        } catch (error) {
-          if (!isBucketAlreadyExistsError(error)) {
-            throw error;
-          }
+    if (!state.s3BucketInitialized) {
+      console.log(`[${state.mode}] Ensuring S3 bucket exists...`);
+      const s3Client = new S3Client({
+        endpoint: localstackHostEndpoint,
+        forcePathStyle: true,
+        region: environment['S3_REGION'],
+        credentials: {
+          accessKeyId: environment['S3_ACCESS_KEY_ID'],
+          secretAccessKey: environment['S3_SECRET_ACCESS_KEY']
         }
+      });
 
-        s3BucketInitialized = true;
+      try {
+        await s3Client.send(new CreateBucketCommand({ Bucket: environment['S3_BUCKET'] }));
+      } catch (error) {
+        if (!isBucketAlreadyExistsError(error)) {
+          throw error;
+        }
       }
+
+      state.s3BucketInitialized = true;
     }
 
-    await ensureImageBuilt();
-
-    console.log('Starting application container...');
-    appContainer = await new GenericContainer(IMAGE_NAME)
-      .withNetwork(network)
-      .withEnvironment(environment)
-      .withExposedPorts(3000)
-      .withWaitStrategy(Wait.forListeningPorts())
-      .start();
-
-    apiUrl = `http://${appContainer.getHost()}:${appContainer.getMappedPort(3000)}`;
-    console.log(`API available at: ${apiUrl}`);
-  };
-
-  setupInFlight = performSetup();
-
-  try {
-    await setupInFlight;
-  } catch (error) {
-    currentMode = null;
-    throw error;
-  } finally {
-    setupInFlight = null;
+    state.localstackEndpoint = localstackHostEndpoint;
   }
 
-  return buildResult();
+  await ensureImageBuilt();
+
+  console.log(`[${state.mode}] Starting application container...`);
+  state.appContainer = await new GenericContainer(IMAGE_NAME)
+    .withNetwork(state.network)
+    .withEnvironment(environment)
+    .withExposedPorts(3000)
+    .withWaitStrategy(Wait.forListeningPorts())
+    .start();
+
+  state.apiUrl = `http://${state.appContainer.getHost()}:${state.appContainer.getMappedPort(3000)}`;
+  console.log(`[${state.mode}] API available at: ${state.apiUrl}`);
+
+  return buildResult(state);
 }
 
-export async function teardownIntegrationTests() {
-  if (setupInFlight) {
-    await setupInFlight;
+async function teardownMode(state: EnvironmentState) {
+  if (state.setupInFlight) {
+    await state.setupInFlight.then(() => undefined, () => undefined);
   }
 
-  if (appContainer) {
-    await appContainer.stop();
-  }
-  if (redisContainer) {
-    await redisContainer.stop();
-  }
-  if (localstackContainer) {
-    await localstackContainer.stop();
-  }
-  if (network) {
-    await network.stop();
+  if (state.appContainer) {
+    await state.appContainer.stop();
   }
 
-  appContainer = null;
-  redisContainer = null;
-  localstackContainer = null;
-  network = null;
-  apiUrl = null;
-  currentMode = null;
-  s3BucketInitialized = false;
-}
-
-export function getApiUrl() {
-  if (!apiUrl) {
-    throw new Error('Integration tests not set up. Call setupIntegrationTests() first.');
+  if (state.redisContainer) {
+    await state.redisContainer.stop();
   }
-  return apiUrl;
-}
 
-export function getLocalStackContainer() {
-  if (!localstackContainer) {
-    throw new Error('LocalStack not available. Call setupIntegrationTests({ s3Mode: true }) first.');
+  if (state.localstackContainer) {
+    await state.localstackContainer.stop();
   }
-  return localstackContainer;
+
+  if (state.network) {
+    await state.network.stop();
+  }
+
+  state.appContainer = null;
+  state.redisContainer = null;
+  state.localstackContainer = null;
+  state.network = null;
+  state.apiUrl = null;
+  state.s3BucketInitialized = false;
+  state.localstackEndpoint = null;
 }
 
 async function ensureImageBuilt() {
@@ -198,16 +269,19 @@ async function ensureImageBuilt() {
   await imageBuildPromise;
 }
 
-function buildResult(): IntegrationSetupResult {
-  if (!apiUrl || !appContainer || !redisContainer) {
-    throw new Error('Integration test containers not initialized.');
+function buildResult(state: EnvironmentState): IntegrationSetupResult {
+  if (!state.apiUrl) {
+    throw new Error(`Integration test environment for mode "${state.mode}" not initialized.`);
+  }
+
+  if (state.requiresS3 && !state.localstackEndpoint) {
+    throw new Error('LocalStack endpoint not initialized.');
   }
 
   return {
-    apiUrl,
-    appContainer,
-    redisContainer,
-    localstackContainer: localstackContainer ?? undefined
+    mode: state.mode,
+    apiUrl: state.apiUrl,
+    localstackEndpoint: state.localstackEndpoint ?? undefined
   };
 }
 
@@ -222,4 +296,19 @@ function isBucketAlreadyExistsError(error: unknown) {
   const status = (error as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode;
 
   return Boolean((name && knownCodes.has(name)) || (code && knownCodes.has(code)) || status === 409);
+}
+
+function populateStateFromEnv(state: EnvironmentState) {
+  const prefix = state.mode === 's3' ? 'FFMPEG_REST_S3' : 'FFMPEG_REST_STATELESS';
+  const apiUrl = process.env[`${prefix}_API_URL`];
+  if (apiUrl) {
+    state.apiUrl = apiUrl;
+  }
+
+  if (state.requiresS3) {
+    const endpoint = process.env['FFMPEG_REST_S3_LOCALSTACK_URL'];
+    if (endpoint) {
+      state.localstackEndpoint = endpoint;
+    }
+  }
 }

@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { setupIntegrationTests, teardownIntegrationTests, getApiUrl, getLocalStackContainer } from '~/test-utils/integration-setup';
+import { describe, it, expect, beforeAll } from 'vitest';
+import { setupIntegrationTests, getApiUrl, getLocalStackEndpoint } from '~/test-utils/integration-setup';
 import { ensureBucketExists } from '~/test-utils/s3';
 import { readFile } from 'fs/promises';
 import path from 'path';
@@ -9,10 +9,6 @@ describe('Audio Conversion Integration', () => {
   beforeAll(async () => {
     await setupIntegrationTests();
   }, 120000);
-
-  afterAll(async () => {
-    await teardownIntegrationTests();
-  });
 
   it('should convert WAV to MP3', async () => {
     const apiUrl = getApiUrl();
@@ -78,8 +74,7 @@ describe('Audio Conversion Integration - S3 Mode', () => {
   beforeAll(async () => {
     await setupIntegrationTests({ s3Mode: true });
 
-    const container = getLocalStackContainer();
-    const endpoint = container.getConnectionUri();
+    const endpoint = getLocalStackEndpoint('s3');
 
     s3Client = new S3Client({
       endpoint,
@@ -94,12 +89,8 @@ describe('Audio Conversion Integration - S3 Mode', () => {
     await ensureBucketExists(s3Client, TEST_BUCKET);
   }, 180000);
 
-  afterAll(async () => {
-    await teardownIntegrationTests();
-  });
-
   it('should convert WAV to MP3 and upload to S3', async () => {
-    const apiUrl = getApiUrl();
+    const apiUrl = getApiUrl('s3');
     const testAudioPath = path.join(__dirname, '../../../test-audio.wav');
     const audioBuffer = await readFile(testAudioPath);
 
@@ -127,7 +118,7 @@ describe('Audio Conversion Integration - S3 Mode', () => {
   }, 60000);
 
   it('should convert MP3 to WAV and upload to S3', async () => {
-    const apiUrl = getApiUrl();
+    const apiUrl = getApiUrl('s3');
     const testAudioPath = path.join(__dirname, '../../../test-audio.wav');
     const audioBuffer = await readFile(testAudioPath);
 
@@ -155,7 +146,7 @@ describe('Audio Conversion Integration - S3 Mode', () => {
   }, 60000);
 
   it('should reject invalid file for MP3 conversion', async () => {
-    const apiUrl = getApiUrl();
+    const apiUrl = getApiUrl('s3');
     const formData = new FormData();
     const blob = new Blob(['not an audio file'], { type: 'text/plain' });
     formData.append('file', blob, 'test.txt');

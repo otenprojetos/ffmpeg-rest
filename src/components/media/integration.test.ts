@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { setupIntegrationTests, teardownIntegrationTests, getApiUrl } from '~/test-utils/integration-setup';
+import { describe, it, expect, beforeAll } from 'vitest';
+import { setupIntegrationTests, getApiUrl } from '~/test-utils/integration-setup';
 import { readFile } from 'fs/promises';
 import path from 'path';
 
@@ -7,10 +7,6 @@ describe('Media Probing Integration', () => {
   beforeAll(async () => {
     await setupIntegrationTests();
   }, 120000);
-
-  afterAll(async () => {
-    await teardownIntegrationTests();
-  });
 
   it('should probe video file metadata', async () => {
     const apiUrl = getApiUrl();
