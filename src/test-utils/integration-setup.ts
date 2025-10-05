@@ -36,7 +36,7 @@ export async function setupIntegrationTests(options?: { s3Mode?: boolean }) {
       .withNetworkAliases('localstack')
       .start();
 
-    environment['STORAGE_M  ODE'] = 's3';
+    environment['STORAGE_MODE'] = 's3';
     environment['S3_ENDPOINT'] = 'http://localstack:4566';
     environment['S3_REGION'] = 'us-east-1';
     environment['S3_BUCKET'] = 'test-ffmpeg-bucket';
