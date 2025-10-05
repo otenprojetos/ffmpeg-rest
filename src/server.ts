@@ -8,12 +8,10 @@ await checkRedisHealth();
 
 const app = createApp();
 
-const port = 3000;
-
 serve(
   {
     fetch: app.fetch,
-    port
+    port: env.PORT
   },
   (info) => {
     logger.info('🚀 FFmpeg REST API started');
