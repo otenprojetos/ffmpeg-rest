@@ -8,6 +8,9 @@
 .idea/usage.statistics.xml
 .idea/shelf
 
+# test
+coverage/
+
 # deps
 node_modules/
 
