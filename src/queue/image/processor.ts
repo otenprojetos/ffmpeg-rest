@@ -31,14 +31,9 @@ export async function processImageToJpg(job: Job<ImageToJpgJobData>): Promise<Jo
     await mkdir(outputDir, { recursive: true });
 
     const ffmpegStart = Date.now();
-    await execFileAsync('ffmpeg', [
-      '-i',
-      inputPath,
-      '-q:v',
-      quality.toString(),
-      '-y',
-      outputPath
-    ], { timeout: PROCESSING_TIMEOUT });
+    await execFileAsync('ffmpeg', ['-i', inputPath, '-q:v', quality.toString(), '-y', outputPath], {
+      timeout: PROCESSING_TIMEOUT
+    });
     const ffmpegDuration = Date.now() - ffmpegStart;
     logger.info({ jobId: job.id, duration: ffmpegDuration }, 'FFmpeg conversion completed');
 

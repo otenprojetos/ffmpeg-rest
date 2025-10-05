@@ -14,8 +14,7 @@ export async function checkS3Health(): Promise<void> {
     return;
   }
 
-  if (!env.S3_ENDPOINT || !env.S3_REGION || !env.S3_BUCKET ||
-      !env.S3_ACCESS_KEY_ID || !env.S3_SECRET_ACCESS_KEY) {
+  if (!env.S3_ENDPOINT || !env.S3_REGION || !env.S3_BUCKET || !env.S3_ACCESS_KEY_ID || !env.S3_SECRET_ACCESS_KEY) {
     throw new Error('S3 mode enabled but configuration is incomplete');
   }
 

@@ -16,21 +16,37 @@ const PROCESSING_TIMEOUT = 600000;
 
 async function shouldCopyStreams(inputPath: string): Promise<boolean> {
   try {
-    const { stdout: videoCodec } = await execFileAsync('ffprobe', [
-      '-v', 'error',
-      '-select_streams', 'v:0',
-      '-show_entries', 'stream=codec_name',
-      '-of', 'default=noprint_wrappers=1:nokey=1',
-      inputPath
-    ], { timeout: 30000 });
+    const { stdout: videoCodec } = await execFileAsync(
+      'ffprobe',
+      [
+        '-v',
+        'error',
+        '-select_streams',
+        'v:0',
+        '-show_entries',
+        'stream=codec_name',
+        '-of',
+        'default=noprint_wrappers=1:nokey=1',
+        inputPath
+      ],
+      { timeout: 30000 }
+    );
 
-    const { stdout: audioCodec } = await execFileAsync('ffprobe', [
-      '-v', 'error',
-      '-select_streams', 'a:0',
-      '-show_entries', 'stream=codec_name',
-      '-of', 'default=noprint_wrappers=1:nokey=1',
-      inputPath
-    ], { timeout: 30000 });
+    const { stdout: audioCodec } = await execFileAsync(
+      'ffprobe',
+      [
+        '-v',
+        'error',
+        '-select_streams',
+        'a:0',
+        '-show_entries',
+        'stream=codec_name',
+        '-of',
+        'default=noprint_wrappers=1:nokey=1',
+        inputPath
+      ],
+      { timeout: 30000 }
+    );
 
     return videoCodec.trim() === 'h264' && audioCodec.trim() === 'aac';
   } catch {
@@ -52,36 +68,33 @@ export async function processVideoToMp4(job: Job<VideoToMp4JobData>): Promise<Jo
     const outputDir = dirname(outputPath);
     await mkdir(outputDir, { recursive: true });
 
-    if (smartCopy && await shouldCopyStreams(inputPath)) {
-      await execFileAsync('ffmpeg', [
-        '-i',
-        inputPath,
-        '-c',
-        'copy',
-        '-movflags',
-        '+faststart',
-        '-y',
-        outputPath
-      ], { timeout: PROCESSING_TIMEOUT });
+    if (smartCopy && (await shouldCopyStreams(inputPath))) {
+      await execFileAsync('ffmpeg', ['-i', inputPath, '-c', 'copy', '-movflags', '+faststart', '-y', outputPath], {
+        timeout: PROCESSING_TIMEOUT
+      });
     } else {
-      await execFileAsync('ffmpeg', [
-        '-i',
-        inputPath,
-        '-codec:v',
-        'libx264',
-        '-preset',
-        preset,
-        '-crf',
-        crf.toString(),
-        '-codec:a',
-        'aac',
-        '-b:a',
-        '128k',
-        '-movflags',
-        '+faststart',
-        '-y',
-        outputPath
-      ], { timeout: PROCESSING_TIMEOUT });
+      await execFileAsync(
+        'ffmpeg',
+        [
+          '-i',
+          inputPath,
+          '-codec:v',
+          'libx264',
+          '-preset',
+          preset,
+          '-crf',
+          crf.toString(),
+          '-codec:a',
+          'aac',
+          '-b:a',
+          '128k',
+          '-movflags',
+          '+faststart',
+          '-y',
+          outputPath
+        ],
+        { timeout: PROCESSING_TIMEOUT }
+      );
     }
 
     if (env.STORAGE_MODE === 's3') {
@@ -120,15 +133,7 @@ export async function processVideoExtractAudio(job: Job<VideoExtractAudioJobData
     const outputDir = dirname(outputPath);
     await mkdir(outputDir, { recursive: true });
 
-    const args = [
-      '-i',
-      inputPath,
-      '-vn',
-      '-acodec',
-      'pcm_s16le',
-      '-ar',
-      '44100'
-    ];
+    const args = ['-i', inputPath, '-vn', '-acodec', 'pcm_s16le', '-ar', '44100'];
 
     if (mono) {
       args.push('-ac', '1');
@@ -188,8 +193,8 @@ export async function processVideoExtractFrames(job: Job<VideoExtractFramesJobDa
 
     const { readdirSync } = await import('fs');
     const frames = readdirSync(outputDir)
-      .filter(f => f.endsWith(`.${ext}`))
-      .map(f => path.join(outputDir, f));
+      .filter((f) => f.endsWith(`.${ext}`))
+      .map((f) => path.join(outputDir, f));
 
     if (frames.length === 0) {
       return {

@@ -110,10 +110,12 @@ describe('Audio Conversion Integration - S3 Mode', () => {
     expect(json.url).toContain('.mp3');
 
     const key = json.url.split(`${TEST_BUCKET}/`)[1];
-    const headResult = await s3Client.send(new HeadObjectCommand({
-      Bucket: TEST_BUCKET,
-      Key: key
-    }));
+    const headResult = await s3Client.send(
+      new HeadObjectCommand({
+        Bucket: TEST_BUCKET,
+        Key: key
+      })
+    );
     expect(headResult.ContentType).toBe('audio/mpeg');
   }, 60000);
 
@@ -138,10 +140,12 @@ describe('Audio Conversion Integration - S3 Mode', () => {
     expect(json.url).toContain('.wav');
 
     const key = json.url.split(`${TEST_BUCKET}/`)[1];
-    const headResult = await s3Client.send(new HeadObjectCommand({
-      Bucket: TEST_BUCKET,
-      Key: key
-    }));
+    const headResult = await s3Client.send(
+      new HeadObjectCommand({
+        Bucket: TEST_BUCKET,
+        Key: key
+      })
+    );
     expect(headResult.ContentType).toBe('audio/wav');
   }, 60000);
 

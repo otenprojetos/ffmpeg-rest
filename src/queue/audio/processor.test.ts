@@ -124,10 +124,7 @@ describe('processAudioToMp3', () => {
 });
 
 function createTestWavFile(outputPath: string): void {
-  execSync(
-    `ffmpeg -f lavfi -i "sine=frequency=1000:duration=1" -ar 44100 -ac 2 -y "${outputPath}"`,
-    { stdio: 'pipe' }
-  );
+  execSync(`ffmpeg -f lavfi -i "sine=frequency=1000:duration=1" -ar 44100 -ac 2 -y "${outputPath}"`, { stdio: 'pipe' });
 }
 
 function createTestMp3File(outputPath: string, channels = 2): void {
@@ -360,10 +357,12 @@ describe('Audio Processors - S3 Mode', () => {
 
     const key = result.outputUrl?.split(`${TEST_BUCKET}/`)[1];
     if (key) {
-      const headResult = await s3Client.send(new HeadObjectCommand({
-        Bucket: TEST_BUCKET,
-        Key: key
-      }));
+      const headResult = await s3Client.send(
+        new HeadObjectCommand({
+          Bucket: TEST_BUCKET,
+          Key: key
+        })
+      );
       expect(headResult.ContentType).toBe('audio/mpeg');
     }
   });
@@ -395,10 +394,12 @@ describe('Audio Processors - S3 Mode', () => {
 
     const key = result.outputUrl?.split(`${TEST_BUCKET}/`)[1];
     if (key) {
-      const headResult = await s3Client.send(new HeadObjectCommand({
-        Bucket: TEST_BUCKET,
-        Key: key
-      }));
+      const headResult = await s3Client.send(
+        new HeadObjectCommand({
+          Bucket: TEST_BUCKET,
+          Key: key
+        })
+      );
       expect(headResult.ContentType).toBe('audio/wav');
     }
   });

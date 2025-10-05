@@ -27,16 +27,11 @@ export async function processAudioToMp3(job: Job<AudioToMp3JobData>): Promise<Jo
     const outputDir = dirname(outputPath);
     await mkdir(outputDir, { recursive: true });
 
-    await execFileAsync('ffmpeg', [
-      '-i',
-      inputPath,
-      '-codec:a',
-      'libmp3lame',
-      '-qscale:a',
-      quality.toString(),
-      '-y',
-      outputPath
-    ], { timeout: PROCESSING_TIMEOUT });
+    await execFileAsync(
+      'ffmpeg',
+      ['-i', inputPath, '-codec:a', 'libmp3lame', '-qscale:a', quality.toString(), '-y', outputPath],
+      { timeout: PROCESSING_TIMEOUT }
+    );
 
     if (env.STORAGE_MODE === 's3') {
       const { url } = await uploadToS3(outputPath, 'audio/mpeg', basename(outputPath));
@@ -74,16 +69,9 @@ export async function processAudioToWav(job: Job<AudioToWavJobData>): Promise<Jo
     const outputDir = dirname(outputPath);
     await mkdir(outputDir, { recursive: true });
 
-    await execFileAsync('ffmpeg', [
-      '-i',
-      inputPath,
-      '-acodec',
-      'pcm_s16le',
-      '-ar',
-      '44100',
-      '-y',
-      outputPath
-    ], { timeout: PROCESSING_TIMEOUT });
+    await execFileAsync('ffmpeg', ['-i', inputPath, '-acodec', 'pcm_s16le', '-ar', '44100', '-y', outputPath], {
+      timeout: PROCESSING_TIMEOUT
+    });
 
     if (env.STORAGE_MODE === 's3') {
       const { url } = await uploadToS3(outputPath, 'audio/wav', basename(outputPath));

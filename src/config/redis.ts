@@ -35,7 +35,7 @@ export async function checkRedisHealth(): Promise<void> {
         throw new Error(`Redis health check failed: ${errorMessage}`);
       }
       logger.debug(`Redis connection attempt ${attempt}/${maxRetries} failed, retrying in ${retryDelay}ms...`);
-      await new Promise(resolve => setTimeout(resolve, retryDelay));
+      await new Promise((resolve) => setTimeout(resolve, retryDelay));
     }
   }
 }

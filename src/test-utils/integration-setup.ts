@@ -216,7 +216,10 @@ async function performSetup(state: EnvironmentState): Promise<IntegrationSetupRe
 
 async function teardownMode(state: EnvironmentState) {
   if (state.setupInFlight) {
-    await state.setupInFlight.then(() => undefined, () => undefined);
+    await state.setupInFlight.then(
+      () => undefined,
+      () => undefined
+    );
   }
 
   if (state.appContainer) {

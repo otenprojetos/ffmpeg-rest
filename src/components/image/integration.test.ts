@@ -89,10 +89,12 @@ describe('Image Conversion Integration - S3 Mode', () => {
     expect(json.url).toContain('.jpg');
 
     const key = json.url.split(`${TEST_BUCKET}/`)[1];
-    const headResult = await s3Client.send(new HeadObjectCommand({
-      Bucket: TEST_BUCKET,
-      Key: key
-    }));
+    const headResult = await s3Client.send(
+      new HeadObjectCommand({
+        Bucket: TEST_BUCKET,
+        Key: key
+      })
+    );
     expect(headResult.ContentType).toBe('image/jpeg');
   }, 60000);
 

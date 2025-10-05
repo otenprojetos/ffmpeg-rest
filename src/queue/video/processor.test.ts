@@ -218,7 +218,7 @@ describe('processVideoExtractFrames', () => {
 
     const files = readdirSync(outputDir);
     expect(files.length).toBeGreaterThan(0);
-    expect(files.every(f => f.endsWith('.png'))).toBe(true);
+    expect(files.every((f) => f.endsWith('.png'))).toBe(true);
   });
 
   it('should create compressed zip archive when compress is zip', async () => {
@@ -298,7 +298,7 @@ describe('processVideoExtractFrames', () => {
 
     const files = readdirSync(outputDir);
     expect(files.length).toBeGreaterThan(0);
-    expect(files.every(f => f.endsWith('.jpg'))).toBe(true);
+    expect(files.every((f) => f.endsWith('.jpg'))).toBe(true);
   });
 
   it('should return error when input file does not exist', async () => {
@@ -548,10 +548,12 @@ describe('Video Processors - S3 Mode', () => {
 
     const key = result.outputUrl?.split(`${TEST_BUCKET}/`)[1];
     if (key) {
-      const headResult = await s3Client.send(new HeadObjectCommand({
-        Bucket: TEST_BUCKET,
-        Key: key
-      }));
+      const headResult = await s3Client.send(
+        new HeadObjectCommand({
+          Bucket: TEST_BUCKET,
+          Key: key
+        })
+      );
       expect(headResult.ContentType).toBe('video/mp4');
     }
   });
@@ -584,10 +586,12 @@ describe('Video Processors - S3 Mode', () => {
 
     const key = result.outputUrl?.split(`${TEST_BUCKET}/`)[1];
     if (key) {
-      const headResult = await s3Client.send(new HeadObjectCommand({
-        Bucket: TEST_BUCKET,
-        Key: key
-      }));
+      const headResult = await s3Client.send(
+        new HeadObjectCommand({
+          Bucket: TEST_BUCKET,
+          Key: key
+        })
+      );
       expect(headResult.ContentType).toBe('audio/wav');
     }
   });
@@ -622,10 +626,12 @@ describe('Video Processors - S3 Mode', () => {
 
     const key = result.outputUrl?.split(`${TEST_BUCKET}/`)[1];
     if (key) {
-      const headResult = await s3Client.send(new HeadObjectCommand({
-        Bucket: TEST_BUCKET,
-        Key: key
-      }));
+      const headResult = await s3Client.send(
+        new HeadObjectCommand({
+          Bucket: TEST_BUCKET,
+          Key: key
+        })
+      );
       expect(headResult.ContentType).toBe('application/zip');
     }
   });

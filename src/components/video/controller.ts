@@ -107,10 +107,13 @@ export function registerVideoRoutes(app: OpenAPIHono) {
       const compress = query.compress;
 
       if (!compress) {
-        return c.json({
-          error: 'compress parameter is required',
-          message: 'Please specify compress=zip or compress=gzip to get frames as an archive'
-        }, 400);
+        return c.json(
+          {
+            error: 'compress parameter is required',
+            message: 'Please specify compress=zip or compress=gzip to get frames as an archive'
+          },
+          400
+        );
       }
 
       const jobId = randomUUID();
@@ -248,10 +251,13 @@ export function registerVideoRoutes(app: OpenAPIHono) {
       const compress = query.compress;
 
       if (!compress) {
-        return c.json({
-          error: 'compress parameter is required',
-          message: 'Please specify compress=zip or compress=gzip to get frames as an archive'
-        }, 400);
+        return c.json(
+          {
+            error: 'compress parameter is required',
+            message: 'Please specify compress=zip or compress=gzip to get frames as an archive'
+          },
+          400
+        );
       }
 
       const jobId = randomUUID();
@@ -288,8 +294,11 @@ export function registerVideoRoutes(app: OpenAPIHono) {
   });
 
   app.openapi(downloadFrameRoute, (c) => {
-    return c.json({
-      error: 'Not implemented - use compress parameter on POST /video/frames instead'
-    }, 501);
+    return c.json(
+      {
+        error: 'Not implemented - use compress parameter on POST /video/frames instead'
+      },
+      501
+    );
   });
 }

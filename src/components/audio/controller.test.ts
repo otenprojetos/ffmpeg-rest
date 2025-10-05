@@ -125,15 +125,11 @@ describe('Audio Controller', () => {
 });
 
 function createTestWavFile(outputPath: string): void {
-  execSync(
-    `ffmpeg -f lavfi -i "sine=frequency=1000:duration=1" -ar 44100 -ac 2 -y "${outputPath}"`,
-    { stdio: 'pipe' }
-  );
+  execSync(`ffmpeg -f lavfi -i "sine=frequency=1000:duration=1" -ar 44100 -ac 2 -y "${outputPath}"`, { stdio: 'pipe' });
 }
 
 function createTestMp3File(outputPath: string): void {
-  execSync(
-    `ffmpeg -f lavfi -i "sine=frequency=1000:duration=1" -codec:a libmp3lame -qscale:a 2 -y "${outputPath}"`,
-    { stdio: 'pipe' }
-  );
+  execSync(`ffmpeg -f lavfi -i "sine=frequency=1000:duration=1" -codec:a libmp3lame -qscale:a 2 -y "${outputPath}"`, {
+    stdio: 'pipe'
+  });
 }

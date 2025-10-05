@@ -85,8 +85,5 @@ describe('Image Controller', () => {
 });
 
 function createTestPngFile(outputPath: string): void {
-  execSync(
-    `ffmpeg -f lavfi -i color=c=blue:s=320x240:d=1 -frames:v 1 -y "${outputPath}"`,
-    { stdio: 'pipe' }
-  );
+  execSync(`ffmpeg -f lavfi -i color=c=blue:s=320x240:d=1 -frames:v 1 -y "${outputPath}"`, { stdio: 'pipe' });
 }

@@ -121,8 +121,7 @@ function createTestVideoFile(outputPath: string): void {
 }
 
 function createTestAudioFile(outputPath: string): void {
-  execSync(
-    `ffmpeg -f lavfi -i "sine=frequency=1000:duration=1" -codec:a libmp3lame -qscale:a 2 -y "${outputPath}"`,
-    { stdio: 'pipe' }
-  );
+  execSync(`ffmpeg -f lavfi -i "sine=frequency=1000:duration=1" -codec:a libmp3lame -qscale:a 2 -y "${outputPath}"`, {
+    stdio: 'pipe'
+  });
 }

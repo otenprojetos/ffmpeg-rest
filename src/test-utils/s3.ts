@@ -19,9 +19,11 @@ function isBucketAlreadyExistsError(error: unknown) {
   const code = (error as { Code?: string }).Code;
   const status = (error as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode;
 
-  return name === 'BucketAlreadyOwnedByYou' ||
+  return (
+    name === 'BucketAlreadyOwnedByYou' ||
     name === 'BucketAlreadyExists' ||
     code === 'BucketAlreadyOwnedByYou' ||
     code === 'BucketAlreadyExists' ||
-    status === 409;
+    status === 409
+  );
 }

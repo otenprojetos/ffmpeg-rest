@@ -120,10 +120,9 @@ describe('processImageToJpg', () => {
 });
 
 function createTestPngFile(outputPath: string): void {
-  execSync(
-    `ffmpeg -f lavfi -i testsrc=duration=1:size=320x240:rate=1 -frames:v 1 -y "${outputPath}"`,
-    { stdio: 'pipe' }
-  );
+  execSync(`ffmpeg -f lavfi -i testsrc=duration=1:size=320x240:rate=1 -frames:v 1 -y "${outputPath}"`, {
+    stdio: 'pipe'
+  });
 }
 
 const TEST_BUCKET = 'test-ffmpeg-bucket';
@@ -215,10 +214,12 @@ describe('Image Processors - S3 Mode', () => {
 
     const key = result.outputUrl?.split(`${TEST_BUCKET}/`)[1];
     if (key) {
-      const headResult = await s3Client.send(new HeadObjectCommand({
-        Bucket: TEST_BUCKET,
-        Key: key
-      }));
+      const headResult = await s3Client.send(
+        new HeadObjectCommand({
+          Bucket: TEST_BUCKET,
+          Key: key
+        })
+      );
       expect(headResult.ContentType).toBe('image/jpeg');
     }
   });

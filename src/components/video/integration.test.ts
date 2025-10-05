@@ -131,10 +131,12 @@ describe('Video Processing Integration - S3 Mode', () => {
     expect(json.url).toContain('.mp4');
 
     const key = json.url.split(`${TEST_BUCKET}/`)[1];
-    const headResult = await s3Client.send(new HeadObjectCommand({
-      Bucket: TEST_BUCKET,
-      Key: key
-    }));
+    const headResult = await s3Client.send(
+      new HeadObjectCommand({
+        Bucket: TEST_BUCKET,
+        Key: key
+      })
+    );
     expect(headResult.ContentType).toBe('video/mp4');
   }, 60000);
 
@@ -159,10 +161,12 @@ describe('Video Processing Integration - S3 Mode', () => {
     expect(json.url).toContain('.wav');
 
     const key = json.url.split(`${TEST_BUCKET}/`)[1];
-    const headResult = await s3Client.send(new HeadObjectCommand({
-      Bucket: TEST_BUCKET,
-      Key: key
-    }));
+    const headResult = await s3Client.send(
+      new HeadObjectCommand({
+        Bucket: TEST_BUCKET,
+        Key: key
+      })
+    );
     expect(headResult.ContentType).toBe('audio/wav');
   }, 60000);
 
@@ -187,10 +191,12 @@ describe('Video Processing Integration - S3 Mode', () => {
     expect(json.url).toContain('.zip');
 
     const key = json.url.split(`${TEST_BUCKET}/`)[1];
-    const headResult = await s3Client.send(new HeadObjectCommand({
-      Bucket: TEST_BUCKET,
-      Key: key
-    }));
+    const headResult = await s3Client.send(
+      new HeadObjectCommand({
+        Bucket: TEST_BUCKET,
+        Key: key
+      })
+    );
     expect(headResult.ContentType).toBe('application/zip');
   }, 60000);
 

@@ -20,15 +20,11 @@ export async function processMediaProbe(job: Job<MediaProbeJobData>): Promise<Jo
   }
 
   try {
-    const { stdout } = await execFileAsync('ffprobe', [
-      '-v',
-      'error',
-      '-print_format',
-      'json',
-      '-show_format',
-      '-show_streams',
-      inputPath
-    ], { timeout: PROCESSING_TIMEOUT });
+    const { stdout } = await execFileAsync(
+      'ffprobe',
+      ['-v', 'error', '-print_format', 'json', '-show_format', '-show_streams', inputPath],
+      { timeout: PROCESSING_TIMEOUT }
+    );
 
     const metadata = JSON.parse(stdout);
 
