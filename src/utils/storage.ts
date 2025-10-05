@@ -31,10 +31,10 @@ export async function checkS3Health(): Promise<void> {
 
   try {
     await s3Client.send(new HeadBucketCommand({ Bucket: env.S3_BUCKET }));
-    logger.info({ bucket: env.S3_BUCKET }, 'S3 health check passed');
+    logger.info('✅ S3 health check passed');
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logger.error({ error: errorMessage }, 'S3 health check failed');
+    logger.error(`❌ S3 health check failed: ${errorMessage}`);
     throw new Error(`S3 health check failed: ${errorMessage}`);
   }
 }

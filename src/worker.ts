@@ -55,17 +55,13 @@ worker.on('error', (err) => {
   logger.error({ error: err.message }, 'Worker error');
 });
 
-logger.info({
-  queueName: QUEUE_NAME,
-  concurrency: env.WORKER_CONCURRENCY,
-  storageMode: env.STORAGE_MODE
-}, 'Worker started processing queue');
+logger.info(`🔄 Worker started processing queue: ${QUEUE_NAME}`);
+logger.info(`⚙️  Concurrency: ${env.WORKER_CONCURRENCY}`);
+logger.info(`💾 Storage Mode: ${env.STORAGE_MODE.toUpperCase()}`);
 
 if (env.STORAGE_MODE === 's3') {
-  logger.info({
-    bucket: env.S3_BUCKET,
-    region: env.S3_REGION,
-    prefix: env.S3_PATH_PREFIX
-  }, 'S3 configuration');
+  logger.info(`   S3 Bucket: ${env.S3_BUCKET}`);
+  logger.info(`   S3 Region: ${env.S3_REGION}`);
+  logger.info(`   S3 Prefix: ${env.S3_PATH_PREFIX}`);
   await checkS3Health();
 }

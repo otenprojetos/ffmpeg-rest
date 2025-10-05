@@ -15,7 +15,7 @@ export const createRedisConnection = () => {
 export const connection = createRedisConnection();
 
 export async function checkRedisHealth(): Promise<void> {
-  logger.info('Checking Redis connection');
+  logger.info('🔍 Checking Redis connection...');
 
   const timeoutPromise = new Promise((_, reject) => {
     setTimeout(() => reject(new Error('Redis health check timed out after 10 seconds')), 10000);
@@ -26,14 +26,14 @@ export async function checkRedisHealth(): Promise<void> {
     const info = await connection.info('server');
     const versionMatch = info.match(/redis_version:([^\r\n]+)/);
     const version = versionMatch ? versionMatch[1] : 'unknown';
-    logger.info({ version }, 'Redis health check passed');
+    logger.info(`✅ Redis health check passed (version: ${version})`);
   })();
 
   try {
     await Promise.race([healthCheckPromise, timeoutPromise]);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logger.error({ error: errorMessage }, 'Redis health check failed');
+    logger.error(`❌ Redis health check failed: ${errorMessage}`);
     throw new Error(`Redis health check failed: ${errorMessage}`);
   }
 }

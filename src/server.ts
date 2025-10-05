@@ -16,12 +16,10 @@ serve(
     port
   },
   (info) => {
-    logger.info({
-      port: info.port,
-      storageMode: env.STORAGE_MODE,
-      openApiSpec: `http://localhost:${info.port}/doc`,
-      apiReference: `http://localhost:${info.port}/reference`,
-      llmDocs: `http://localhost:${info.port}/llms.txt`
-    }, 'FFmpeg REST API started');
+    logger.info('🚀 FFmpeg REST API started');
+    logger.info({ port: info.port, storageMode: env.STORAGE_MODE }, 'Server info');
+    logger.info(`📚 OpenAPI Spec: http://localhost:${info.port}/doc`);
+    logger.info(`📖 API Reference: http://localhost:${info.port}/reference`);
+    logger.info(`🤖 LLM Documentation: http://localhost:${info.port}/llms.txt`);
   }
 );
