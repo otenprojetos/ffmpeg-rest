@@ -2,6 +2,10 @@
 
 A REST API that wraps FFmpeg for media processing operations. Built with Node.js, Hono, and BullMQ for reliable async job processing.
 
+<p align="center">
+  <img src="docs-preview.png" alt="API Documentation Preview" width="800">
+</p>
+
 [![Deploy on Railway](https://railway.app/button.svg)](https://railway.com/deploy/cS-8cr?referralCode=crisog)
 
 ## Features
@@ -23,8 +27,6 @@ This API is built with documentation-first approach using **Hono Zod OpenAPI** a
 - **LLM-Friendly Docs**: Markdown documentation optimized for AI assistants at `/llms.txt` (following [llmstxt.org](https://llmstxt.org/) standard)
 
 Every endpoint is fully documented with request/response schemas, validation rules, and example payloads. No manual documentation maintenance required.
-
-![API Documentation Preview](docs-preview.png)
 
 ## Storage Modes
 
