@@ -39,6 +39,24 @@ Processed files are uploaded to S3-compatible storage and a URL is returned. Thi
 
 Configure S3 mode by setting `STORAGE_MODE=s3` and providing S3 credentials in your environment variables.
 
+#### Content Deduplication
+
+S3 Mode includes intelligent content-based deduplication to optimize storage costs and upload performance:
+
+- **SHA-256 File Hashing**: Each processed file is hashed using SHA-256 before upload
+- **Redis Cache**: File hashes are mapped to S3 URLs with a 90-day TTL (configurable)
+- **Automatic Deduplication**: Identical files are only uploaded once - subsequent requests return the cached S3 URL
+- **Zero-Cost Cache Hits**: When a duplicate file is processed, the upload to S3 is skipped entirely
+- **Graceful Degradation**: Cache failures don't block uploads - the system falls back to normal upload behavior
+
+**Configuration**:
+```bash
+S3_DEDUP_ENABLED=1           # Enable/disable deduplication (default: true)
+S3_DEDUP_TTL_DAYS=90         # Cache TTL in days (default: 90)
+```
+
+This feature dramatically reduces S3 storage costs and upload bandwidth for workloads with duplicate media content, while improving response times through cache hits.
+
 ## Documentation
 
 This API is built with documentation-first approach using **Hono Zod OpenAPI** and **Scalar**:

@@ -25,6 +25,8 @@ const schema = z.object({
   S3_SECRET_ACCESS_KEY: z.string().optional(),
   S3_PUBLIC_URL: z.string().optional(),
   S3_PATH_PREFIX: z.string().default('ffmpeg-rest'),
+  S3_DEDUP_ENABLED: z.coerce.boolean().default(true),
+  S3_DEDUP_TTL_DAYS: z.coerce.number().default(90),
 
   AUTH_TOKEN: z.string().optional()
 });
