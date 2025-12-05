@@ -29,8 +29,14 @@ RUN npm run build
 
 FROM base AS runtime
 
+# 🔥 Criar diretório TEMP (OBRIGATÓRIO)
+USER root
+RUN mkdir -p /tmp/ffmpeg-rest && chmod -R 777 /tmp/ffmpeg-rest
+USER nodejs
+
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
+    
 
 COPY --from=deps --chown=nodejs:nodejs /app/node_modules ./node_modules
 COPY --from=build --chown=nodejs:nodejs /app/dist ./dist
